@@ -74,10 +74,6 @@ curl -i http://localhost:8001/foo-bar -H "Authorization: vYQIYxOpyfr=="
 HTTP/1.1 204 No Content
 ```
 
-## Deploy
-
-Pronto para subir no [Railway](https://railway.app): start command `uvicorn app.main:app --host 0.0.0.0 --port $PORT`, variável de ambiente `VALID_TOKEN` configurada no serviço.
-
 ---
 
 © 2026 Gabriel Teramae Chan
