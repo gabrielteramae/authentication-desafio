@@ -3,7 +3,6 @@
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
 ![Starlette](https://img.shields.io/badge/Starlette-Middleware-black?logo=python&logoColor=white)
-![License](https://img.shields.io/badge/license-MIT-blue)
 
 Solução para o desafio [`backend-br/desafios/authentication`](https://github.com/backend-br/desafios/blob/master/authentication/PROBLEM.md): interceptar toda requisição HTTP e validar um token de acesso enviado no header `Authorization`, antes que ela chegue a qualquer controller.
 
