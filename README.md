@@ -35,8 +35,8 @@ app/
 ## Como rodar
 
 ```bash
-git clone <seu-repo>
-cd auth-transparent-api
+git clone https://github.com/gabrielteramae/authentication-desafio.git
+cd authentication-desafio
 pip install -r requirements.txt
 
 export VALID_TOKEN=vYQIYxOpyfr==
