@@ -11,7 +11,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if request.url.path in PUBLIC_PATHS:
             return await call_next(request)
 
-        token = request.headers.get("Authorization")
+        token = request.headers.get("Authorization") or ""
+        if token.lower().startswith("bearer "):
+            token = token[7:].strip()
 
         if not validate_token(token):
             return JSONResponse(
