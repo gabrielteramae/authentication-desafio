@@ -1,35 +1,35 @@
-# Auth Interceptor API
+# Autenticação — middleware com token fixo
 
-![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
-![Starlette](https://img.shields.io/badge/Starlette-Middleware-black?logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115.0-009688?logo=fastapi&logoColor=white)
 
-Solução para o desafio [`backend-br/desafios/authentication`](https://github.com/backend-br/desafios/blob/master/authentication/PROBLEM.md): interceptar toda requisição HTTP e validar um token de acesso enviado no header `Authorization`, antes que ela chegue a qualquer controller.
+A API não tem usuário nem senha. Um middleware do Starlette lê `Authorization`, aceita o prefixo `Bearer` e compara o valor com `VALID_TOKEN`. A rota só segue se a string for igual.
 
-## Ideia da solução
+## Por que token fixo
 
-A validação acontece num **middleware global** (`AuthMiddleware`), não em cada rota individualmente. Isso garante o requisito principal do desafio: a implementação continua funcionando corretamente mesmo com a adição de novos endpoints, sem precisar tocar em nada além do próprio middleware.
+| Escolha | Efeito |
+| --- | --- |
+| Comparação com uma variável de ambiente | Sem dependência extra. Não expira, não tem dono, não tem papel. |
+| JWT | Expiração e claims, com segredo de assinatura e biblioteca a mais. Este repositório não faz isso. |
+| Checagem em cada rota | Fácil esquecer uma rota. O middleware cobre tudo que não está em `PUBLIC_PATHS`. |
 
-```
-Request -> AuthMiddleware.dispatch() -> valida header Authorization -> valido?  -> segue pro controller
-                                                                     -> invalido? -> 401 Unauthorized
-```
-
-A lógica de validação do token fica isolada em `security.py`, então trocar o mock por uma verificação real (JWT, chamada a um serviço de auth, etc.) é uma mudança local, sem impacto no restante da aplicação.
+Livres: `/docs`, `/openapi.json`, `/redoc`, `/health`. Se `VALID_TOKEN` não estiver definida, `security.py` usa o valor de `.env.example`. Quem clona o repositório conhece esse fallback.
 
 ## Stack
 
-- **FastAPI** para a API REST
-- **Starlette `BaseHTTPMiddleware`** para interceptar as requisições antes do roteamento
-- Validação de token mockada e isolada em `security.py` (fácil de substituir por uma implementação real)
+- Python (sem versão pinada no repositório)
+- FastAPI 0.115.0 e Uvicorn 0.30.6
+- Middleware do Starlette, que já vem com o FastAPI
 
 ## Estrutura
 
 ```
 app/
-├── main.py         # app FastAPI + endpoints de exemplo
-├── middleware.py     # AuthMiddleware, intercepta toda requisição
-└── security.py         # validate_token(), lógica de validação (mock)
+├── main.py        # /health, /foo-bar, /baz-qux
+├── middleware.py  # 401 se o token não bater
+└── security.py    # comparação com VALID_TOKEN
+.env.example
+requirements.txt
 ```
 
 ## Como rodar
@@ -37,41 +37,28 @@ app/
 ```bash
 git clone https://github.com/gabrielteramae/authentication-desafio.git
 cd authentication-desafio
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-
-export VALID_TOKEN=vYQIYxOpyfr==
-
-uvicorn app.main:app --reload --port 8001
+export VALID_TOKEN="${VALID_TOKEN:-vYQIYxOpyfr==}"
+uvicorn app.main:app --reload
 ```
+
+Troque `VALID_TOKEN` se não quiser o valor de exemplo.
 
 ## Endpoints
 
-| Método | Rota        | Protegido | Descrição                    |
-|--------|-------------|:---------:|--------------------------------|
-| GET    | `/health`     | Não        | Healthcheck público             |
-| GET    | `/foo-bar`     | Sim         | Endpoint de exemplo (204)        |
-| GET    | `/baz-qux`      | Sim          | Segundo endpoint, comprova que o middleware protege qualquer rota nova automaticamente |
+| Método | Rota | Auth | Resposta |
+| --- | --- | --- | --- |
+| GET | `/health` | não | `{"status":"ok"}` |
+| GET | `/foo-bar` | sim | 204 |
+| GET | `/baz-qux` | sim | 204 |
 
-## Exemplo
+Token ausente ou diferente: 401 `{"error":"unauthorized","message":"Token de acesso ausente ou invalido"}`.
 
-Sem token ou com token inválido:
+## O que não tem
 
-```bash
-curl -i http://localhost:8001/foo-bar
-```
-```
-HTTP/1.1 401 Unauthorized
-{"error": "unauthorized", "message": "Token de acesso ausente ou invalido"}
-```
-
-Com token válido:
-
-```bash
-curl -i http://localhost:8001/foo-bar -H "Authorization: vYQIYxOpyfr=="
-```
-```
-HTTP/1.1 204 No Content
-```
+Não há testes automatizados, cadastro, refresh, expiração nem hash de segredo.
 
 ---
 
